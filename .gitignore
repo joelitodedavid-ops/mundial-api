@@ -1,0 +1,47 @@
+
+# Maven
+
+target/
+
+
+
+# Secretos
+
+src/main/resources/local.properties
+
+*.env
+
+
+
+# Eclipse / Spring Tools
+
+.classpath
+
+.project
+
+.settings/
+
+.springBeans
+
+bin/
+
+
+
+# IntelliJ / VS Code
+
+.idea/
+
+*.iml
+
+.vscode/
+
+
+
+# Sistema
+
+.DS_Store
+
+Thumbs.db
+
+HELP.md
+

@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="${titulo}">Gestión del Mundial</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background: #f3f5f9; }
+        .encabezado { background: linear-gradient(135deg, #0b2a4a, #1b6ca8); color: #fff; }
+        .tabla-scroll { max-height: 68vh; overflow-y: auto; }
+        #avisos { position: fixed; top: 1rem; right: 1rem; z-index: 2000; min-width: 280px; }
+        select[multiple] { min-height: 110px; }
+    </style>
+</head>
+
+<!-- th:attr crea data-api="/api": la ruta base de la API REST que usa el JavaScript -->
+<body th:attr="data-api=@{/api},data-entidad=${entidad}">
+
+    <div id="avisos"></div>
+
+    <!-- ============ ENCABEZADO ============ -->
+    <header class="encabezado py-4 shadow">
+        <div class="container text-center">
+            <h1 class="fw-bold mb-1" th:text="${titulo}">Gestión del Mundial</h1>
+            <p class="mb-0 opacity-75">Clubes, jugadores, entrenadores, asociaciones y competiciones</p>
+        </div>
+    </header>
+
+    <div class="container my-4">
+
+        <!-- ============ MENÚ (se genera con th:each desde el controlador) ============ -->
+        <ul class="nav nav-pills justify-content-center gap-2 mb-4" id="menu">
+            <li class="nav-item" th:each="e : ${entidades}">
+                <button type="button" class="nav-link bg-white border" th:attr="data-ent=${e.key}"
+                        th:text="${e.value}">Clubes</button>
+            </li>
+        </ul>
+
+        <div class="row g-4">
+
+            <!-- ============ PANEL IZQUIERDO: FORMULARIOS ============ -->
+            <div class="col-lg-5">
+
+                <!-- CLUB -->
+                <div class="card shadow-sm" data-panel="clubes">
+                    <div class="card-header bg-primary text-white d-flex justify-content-between">
+                        <strong>Registrar club</strong>
+                        <span class="badge bg-warning text-dark d-none badge-edicion">Editando</span>
+                    </div>
+                    <div class="card-body">
+                        <form id="form-clubes" data-entidad="clubes" class="row g-3 needs-validation" novalidate>
+                            <input type="hidden" name="id">
+                            <div class="col-12">
+                                <label class="form-label">Nombre del club</label>
+                                <input type="text" name="nombre" class="form-control" maxlength="80" required>
+                                <div class="invalid-feedback">Escribe el nombre.</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Entrenador (1 a 1)</label>
+                                <select name="entrenador" class="form-select" data-ref></select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Asociación (muchos a 1)</label>
+                                <select name="asociacion" class="form-select" data-ref></select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Jugadores (1 a muchos)</label>
+                                <select name="jugadores" class="form-select" multiple data-ref></select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Competiciones (muchos a muchos)</label>
+                                <select name="competiciones" class="form-select" multiple data-ref></select>
+                            </div>
+                            <div class="col-12 form-text mt-0">Mantén Ctrl (o Cmd) para elegir varios. Crea primero los demás registros.</div>
+                            <div class="col-12 d-flex gap-2">
+                                <button type="submit" class="btn btn-primary btn-guardar">Guardar</button>
+                                <button type="button" class="btn btn-outline-secondary btn-limpiar">Limpiar</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- JUGADOR -->
+                <div class="card shadow-sm d-none" data-panel="jugadores">
+                    <div class="card-header bg-success text-white d-flex justify-content-between">
+                        <strong>Registrar jugador</strong>
+                        <span class="badge bg-warning text-dark d-none badge-edicion">Editando</span>
+                    </div>
+                    <div class="card-body">
+                        <form id="form-jugadores" data-entidad="jugadores" class="row g-3 needs-validation" novalidate>
+                            <input type="hidden" name="id">
+                            <div class="col-md-6">
+                                <label class="form-label">Nombre</label>
+                                <input type="text" name="nombre" class="form-control" maxlength="60" required>
+                                <div class="invalid-feedback">Campo obligatorio.</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Apellido</label>
+                                <input type="text" name="apellido" class="form-control" maxlength="60" required>
+                                <div class="invalid-feedback">Campo obligatorio.</div>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Número</label>
+                                <input type="number" name="numero" class="form-control" min="1" max="99" required>
+                                <div class="invalid-feedback">Entre 1 y 99.</div>
+                            </div>
+                            <div class="col-md-8">
+                                <label class="form-label">Posición</label>
+                                <select name="posicion" class="form-select" required>
+                                    <option value="">Selecciona...</option>
+                                    <option>Portero</option>
+                                    <option>Defensa</option>
+                                    <option>Mediocampista</option>
+                                    <option>Delantero</option>
+                                </select>
+                                <div class="invalid-feedback">Elige una posición.</div>
+                            </div>
+                            <div class="col-12 d-flex gap-2">
+                                <button type="submit" class="btn btn-success btn-guardar">Guardar</button>
+                                <button type="button" class="btn btn-outline-secondary btn-limpiar">Limpiar</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- ENTRENADOR -->
+                <div class="card shadow-sm d-none" data-panel="entrenadores">
+                    <div class="card-header bg-info text-dark d-flex justify-content-between">
+                        <strong>Registrar entrenador</strong>
+                        <span class="badge bg-warning text-dark d-none badge-edicion">Editando</span>
+                    </div>
+                    <div class="card-body">
+                        <form id="form-entrenadores" data-entidad="entrenadores" class="row g-3 needs-validation" novalidate>
+                            <input type="hidden" name="id">
+                            <div class="col-md-6">
+                                <label class="form-label">Nombre</label>
+                                <input type="text" name="nombre" class="form-control" maxlength="60" required>
+                                <div class="invalid-feedback">Campo obligatorio.</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Apellido</label>
+                                <input type="text" name="apellido" class="form-control" maxlength="60" required>
+                                <div class="invalid-feedback">Campo obligatorio.</div>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Edad</label>
+                                <input type="number" name="edad" class="form-control" min="18" max="100" required>
+                                <div class="invalid-feedback">Entre 18 y 100.</div>
+                            </div>
+                            <div class="col-md-8">
+                                <label class="form-label">Nacionalidad</label>
+                                <input type="text" name="nacionalidad" class="form-control" maxlength="60" required>
+                                <div class="invalid-feedback">Campo obligatorio.</div>
+                            </div>
+                            <div class="col-12 d-flex gap-2">
+                                <button type="submit" class="btn btn-info btn-guardar">Guardar</button>
+                                <button type="button" class="btn btn-outline-secondary btn-limpiar">Limpiar</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- ASOCIACIÓN -->
+                <div class="card shadow-sm d-none" data-panel="asociaciones">
+                    <div class="card-header bg-secondary text-white d-flex justify-content-between">
+                        <strong>Registrar asociación</strong>
+                        <span class="badge bg-warning text-dark d-none badge-edicion">Editando</span>
+                    </div>
+                    <div class="card-body">
+                        <form id="form-asociaciones" data-entidad="asociaciones" class="row g-3 needs-validation" novalidate>
+                            <input type="hidden" name="id">
+                            <div class="col-12">
+                                <label class="form-label">Nombre</label>
+                                <input type="text" name="nombre" class="form-control" maxlength="80" required>
+                                <div class="invalid-feedback">Campo obligatorio.</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">País</label>
+                                <input type="text" name="pais" class="form-control" maxlength="60" required>
+                                <div class="invalid-feedback">Campo obligatorio.</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Presidente</label>
+                                <input type="text" name="presidente" class="form-control" maxlength="80" required>
+                                <div class="invalid-feedback">Campo obligatorio.</div>
+                            </div>
+                            <div class="col-12 d-flex gap-2">
+                                <button type="submit" class="btn btn-secondary btn-guardar">Guardar</button>
+                                <button type="button" class="btn btn-outline-secondary btn-limpiar">Limpiar</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- COMPETICIÓN -->
+                <div class="card shadow-sm d-none" data-panel="competiciones">
+                    <div class="card-header bg-dark text-white d-flex justify-content-between">
+                        <strong>Registrar competición</strong>
+                        <span class="badge bg-warning text-dark d-none badge-edicion">Editando</span>
+                    </div>
+                    <div class="card-body">
+                        <form id="form-competiciones" data-entidad="competiciones" class="row g-3 needs-validation" novalidate>
+                            <input type="hidden" name="id">
+                            <div class="col-12">
+                                <label class="form-label">Nombre</label>
+                                <input type="text" name="nombre" class="form-control" maxlength="80" required>
+                                <div class="invalid-feedback">Campo obligatorio.</div>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Monto del premio (USD)</label>
+                                <input type="number" name="montoPremio" class="form-control" min="0" step="0.01" required>
+                                <div class="invalid-feedback">Escribe un monto válido.</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Fecha de inicio</label>
+                                <input type="date" name="fechaInicio" class="form-control" required>
+                                <div class="invalid-feedback">Obligatoria.</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Fecha de fin</label>
+                                <input type="date" name="fechaFin" class="form-control" required>
+                                <div class="invalid-feedback">Obligatoria.</div>
+                            </div>
+                            <div class="col-12 d-flex gap-2">
+                                <button type="submit" class="btn btn-dark btn-guardar">Guardar</button>
+                                <button type="button" class="btn btn-outline-secondary btn-limpiar">Limpiar</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- ============ PANEL DERECHO: TABLA ============ -->
+            <div class="col-lg-7">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-white d-flex flex-wrap align-items-center gap-2">
+                        <h5 class="mb-0" id="tituloTabla">Registros</h5>
+                        <span class="badge bg-primary" id="contador">0 registros</span>
+                        <input type="search" id="buscar" class="form-control form-control-sm ms-auto w-auto"
+                               placeholder="Filtrar en la tabla...">
+                    </div>
+                    <div class="tabla-scroll">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-dark" id="cabecera"></thead>
+                            <tbody id="cuerpo"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- th:inline="none": Thymeleaf no procesa este script, se ejecuta tal cual en el navegador -->
+    <script th:inline="none">
+        const API = document.body.dataset.api;          // "/api"
+        const datos = { clubes: [], jugadores: [], entrenadores: [], asociaciones: [], competiciones: [] };
+        let actual = 'clubes';
+
+        const elCabecera = document.getElementById('cabecera');
+        const elCuerpo = document.getElementById('cuerpo');
+        const elBuscar = document.getElementById('buscar');
+        const elContador = document.getElementById('contador');
+        const elTitulo = document.getElementById('tituloTabla');
+
+        const TITULOS = {
+            clubes: 'Clubes', jugadores: 'Jugadores', entrenadores: 'Entrenadores',
+            asociaciones: 'Asociaciones', competiciones: 'Competiciones'
+        };
+
+        // Columnas y filas de cada tabla
+        const TABLAS = {
+            clubes: {
+                cabecera: ['Club', 'Entrenador', 'Asociación', 'Jugadores', 'Competiciones'],
+                fila: c => [
+                    c.nombre,
+                    c.entrenador ? c.entrenador.nombre + ' ' + c.entrenador.apellido : '—',
+                    c.asociacion ? c.asociacion.nombre : '—',
+                    (c.jugadores || []).filter(Boolean).map(j => j.nombre + ' ' + j.apellido).join(', ') || '—',
+                    (c.competiciones || []).filter(Boolean).map(x => x.nombre).join(', ') || '—'
+                ]
+            },
+            jugadores: {
+                cabecera: ['Nombre', 'Apellido', 'N°', 'Posición'],
+                fila: j => [j.nombre, j.apellido, j.numero, j.posicion]
+            },
+            entrenadores: {
+                cabecera: ['Nombre', 'Apellido', 'Edad', 'Nacionalidad'],
+                fila: e => [e.nombre, e.apellido, e.edad, e.nacionalidad]
+            },
+            asociaciones: {
+                cabecera: ['Nombre', 'País', 'Presidente'],
+                fila: a => [a.nombre, a.pais, a.presidente]
+            },
+            competiciones: {
+                cabecera: ['Nombre', 'Premio (USD)', 'Inicio', 'Fin'],
+                fila: c => [
+                    c.nombre,
+                    c.montoPremio != null ? Number(c.montoPremio).toLocaleString('es-CO') : '',
+                    c.fechaInicio, c.fechaFin
+                ]
+            }
+        };
+
+        // Evita que el texto de la base de datos se interprete como HTML
+        function esc(v) {
+            const mapa = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+            return String(v == null ? '' : v).replace(/[&<>"']/g, ch => mapa[ch]);
+        }
+
+        function aviso(mensaje, tipo) {
+            const d = document.createElement('div');
+            d.className = 'alert alert-' + (tipo || 'success') + ' alert-dismissible fade show shadow';
+            d.innerHTML = esc(mensaje) + '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>';
+            document.getElementById('avisos').appendChild(d);
+            setTimeout(() => d.remove(), 4000);
+        }
+
+        // Llamada genérica a la API REST con fetch
+        async function api(ruta, opciones) {
+            const r = await fetch(API + ruta, Object.assign({ headers: { 'Content-Type': 'application/json' } }, opciones));
+            if (!r.ok) throw new Error('Error ' + r.status);
+            return r.status === 204 ? null : r.json();
+        }
+
+        // Descarga todas las listas y actualiza selects y tabla
+        async function refrescar() {
+            await Promise.all(Object.keys(datos).map(async ent => {
+                try {
+                    datos[ent] = await api('/' + ent);
+                } catch (e) {
+                    datos[ent] = [];
+                    aviso('No se pudo cargar ' + ent + ' (' + e.message + ')', 'danger');
+                }
+            }));
+            llenarSelects();
+            pintarTabla();
+        }
+
+        function llenarSelect(sel, lista, etiqueta, conVacio) {
+            const previos = Array.from(sel.selectedOptions).map(o => o.value);
+            sel.innerHTML = (conVacio ? '<option value="">— Sin asignar —</option>' : '') +
+                lista.map(x => '<option value="' + esc(x.id) + '">' + esc(etiqueta(x)) + '</option>').join('');
+            Array.from(sel.options).forEach(o => { if (previos.includes(o.value)) o.selected = true; });
+        }
+
+        function llenarSelects() {
+            const f = document.getElementById('form-clubes');
+            llenarSelect(f.elements['entrenador'], datos.entrenadores, e => e.nombre + ' ' + e.apellido, true);
+            llenarSelect(f.elements['asociacion'], datos.asociaciones, a => a.nombre + ' (' + a.pais + ')', true);
+            llenarSelect(f.elements['jugadores'], datos.jugadores, j => j.nombre + ' ' + j.apellido + ' #' + j.numero, false);
+            llenarSelect(f.elements['competiciones'], datos.competiciones, c => c.nombre, false);
+        }
+
+        function pintarTabla() {
+            const t = TABLAS[actual];
+            const filtro = elBuscar.value.trim().toLowerCase();
+            const lista = datos[actual].filter(x => !filtro || t.fila(x).join(' ').toLowerCase().includes(filtro));
+
+            elCabecera.innerHTML = '<tr>' + t.cabecera.map(h => '<th>' + esc(h) + '</th>').join('') +
+                '<th class="text-end">Acciones</th></tr>';
+
+            elCuerpo.innerHTML = lista.length
+                ? lista.map(x => '<tr>' + t.fila(x).map(c => '<td>' + esc(c) + '</td>').join('') +
+                    '<td class="text-end text-nowrap">' +
+                    '<button class="btn btn-sm btn-warning me-1" data-accion="editar" data-id="' + esc(x.id) + '">Editar</button>' +
+                    '<button class="btn btn-sm btn-danger" data-accion="eliminar" data-id="' + esc(x.id) + '">Eliminar</button>' +
+                    '</td></tr>').join('')
+                : '<tr><td colspan="10" class="text-center text-muted py-4">Sin registros</td></tr>';
+
+            elContador.textContent = lista.length + (lista.length === 1 ? ' registro' : ' registros');
+        }
+
+        // Cambia de entidad: muestra su formulario y su tabla
+        function mostrar(ent) {
+            actual = ent;
+			history.replaceState(null, '', '/' + ent);
+            document.querySelectorAll('[data-panel]').forEach(p => p.classList.toggle('d-none', p.dataset.panel !== ent));
+            document.querySelectorAll('#menu button').forEach(b => b.classList.toggle('active', b.dataset.ent === ent));
+            elTitulo.textContent = TITULOS[ent];
+            elBuscar.value = '';
+            pintarTabla();
+        }
+
+        // Convierte los campos del formulario en el JSON que espera la API
+        function construirObjeto(f) {
+            const o = {};
+            for (const el of f.elements) {
+                if (!el.name) continue;
+                if (el.tagName === 'SELECT' && el.multiple) {
+                    o[el.name] = Array.from(el.selectedOptions).map(op => ({ id: op.value }));   // lista de referencias
+                } else if (el.dataset.ref !== undefined) {
+                    o[el.name] = el.value ? { id: el.value } : null;                              // referencia única
+                } else if (el.name === 'id') {
+                    if (el.value) o.id = el.value;
+                } else if (el.type === 'number') {
+                    o[el.name] = el.value === '' ? null : Number(el.value);
+                } else if (el.type === 'date') {
+                    o[el.name] = el.value || null;
+                } else {
+                    o[el.name] = el.value;
+                }
+            }
+            return o;
+        }
+
+        function limpiar(f) {
+            f.reset();
+            f.elements['id'].value = '';
+            f.classList.remove('was-validated');
+            const card = f.closest('.card');
+            card.querySelector('.badge-edicion').classList.add('d-none');
+            f.querySelector('.btn-guardar').textContent = 'Guardar';
+        }
+
+        function editar(ent, id) {
+            const obj = datos[ent].find(x => x.id === id);
+            if (!obj) return;
+            const f = document.getElementById('form-' + ent);
+            for (const el of f.elements) {
+                if (!el.name) continue;
+                const v = obj[el.name];
+                if (el.tagName === 'SELECT' && el.multiple) {
+                    const ids = (v || []).filter(Boolean).map(x => x.id);
+                    Array.from(el.options).forEach(o => { o.selected = ids.includes(o.value); });
+                } else if (el.dataset.ref !== undefined) {
+                    el.value = v ? v.id : '';
+                } else {
+                    el.value = v == null ? '' : v;
+                }
+            }
+            f.closest('.card').querySelector('.badge-edicion').classList.remove('d-none');
+            f.querySelector('.btn-guardar').textContent = 'Actualizar';
+            f.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        async function eliminar(ent, id) {
+            if (!confirm('¿Eliminar este registro?')) return;
+            try {
+                await api('/' + ent + '/' + id, { method: 'DELETE' });
+                aviso('Registro eliminado');
+                await refrescar();
+            } catch (e) {
+                aviso(e.message, 'danger');
+            }
+        }
+
+        // ---- Eventos ----
+        document.querySelectorAll('#menu button').forEach(b => b.addEventListener('click', () => mostrar(b.dataset.ent)));
+        elBuscar.addEventListener('input', pintarTabla);
+
+        elCuerpo.addEventListener('click', ev => {
+            const b = ev.target.closest('button[data-accion]');
+            if (!b) return;
+            if (b.dataset.accion === 'editar') editar(actual, b.dataset.id);
+            else eliminar(actual, b.dataset.id);
+        });
+
+        document.querySelectorAll('form[data-entidad]').forEach(f => {
+            f.querySelector('.btn-limpiar').addEventListener('click', () => limpiar(f));
+            f.addEventListener('submit', async ev => {
+                ev.preventDefault();
+                if (!f.checkValidity()) { f.classList.add('was-validated'); return; }
+                const ent = f.dataset.entidad;
+                const id = f.elements['id'].value;
+                const cuerpo = JSON.stringify(construirObjeto(f));
+                try {
+                    if (id) await api('/' + ent + '/' + id, { method: 'PUT', body: cuerpo });
+                    else await api('/' + ent, { method: 'POST', body: cuerpo });
+                    aviso(id ? 'Registro actualizado' : 'Registro guardado');
+                    limpiar(f);
+                    await refrescar();
+                } catch (e) {
+                    aviso('No se pudo guardar: ' + e.message, 'danger');
+                }
+            });
+        });
+
+        // ---- Inicio ----
+        mostrar(document.body.dataset.entidad || 'clubes');
+        refrescar();
+    </script>
+</body>
+</html>

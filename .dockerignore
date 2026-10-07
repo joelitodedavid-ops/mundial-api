@@ -1,0 +1,15 @@
+
+target/
+
+.git/
+
+.gitignore
+
+.classpath
+
+.project
+
+.settings/
+
+src/main/resources/local.properties
+
